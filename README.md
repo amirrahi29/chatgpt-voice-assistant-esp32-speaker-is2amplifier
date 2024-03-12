@@ -1,4 +1,9 @@
+video
+========================================================================================================================================================
+
+
 Images 
+=============================================================================================================================================================
 ![20240312_073518](https://github.com/amirrahi29/chatgpt-voice-assistant-esp32-speaker-is2amplifier/assets/107117774/60458804-1e44-46b5-988d-19f8064afb5b)
 ![20240312_073905](https://github.com/amirrahi29/chatgpt-voice-assistant-esp32-speaker-is2amplifier/assets/107117774/aa9d91ae-1773-442b-93fc-dcc5d318fdcc)
 ![20240312_073406](https://github.com/amirrahi29/chatgpt-voice-assistant-esp32-speaker-is2amplifier/assets/107117774/4422bfca-e524-467c-bee3-b9ee4b77244f)
