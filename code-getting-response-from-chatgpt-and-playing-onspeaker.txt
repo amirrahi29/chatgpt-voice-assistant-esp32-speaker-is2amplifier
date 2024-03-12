@@ -1,0 +1,88 @@
+#define RXp2 16
+#define TXp2 17
+#include "Audio.h"
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+#define I2S_DOUT      25
+#define I2S_BCLK      27
+#define I2S_LRC       26
+
+Audio audio;
+
+const char* chatgpt_token = "API_KEY";
+
+void setup() {
+  Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
+
+  WiFi.disconnect();
+  WiFi.mode(WIFI_STA);
+  WiFi.begin("Gsoft", "amirrahiii");
+
+  while (WiFi.status() != WL_CONNECTED)
+    delay(1500);
+
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(100);
+}
+
+void loop() {
+  // Handle audio playback continuously
+  audio.loop();
+
+  // Check if there is any data available from Serial2
+  if (Serial2.available() > 0) {
+    // Read the data
+    String receivedData = Serial2.readString();
+    Serial.println("Message Received: " + receivedData);
+
+    // Send request to OpenAI API
+    sendOpenAIRequest(receivedData);
+  }
+}
+
+void sendOpenAIRequest(String prompt) {
+  HTTPClient https;
+
+  if (https.begin("https://api.openai.com/v1/completions")) {
+    // Set headers
+    https.addHeader("Content-Type", "application/json");
+    https.addHeader("Authorization", "Bearer " + String(chatgpt_token));
+
+    // Prepare payload using ArduinoJson
+    StaticJsonDocument<200> doc;
+    doc["model"] = "gpt-3.5-turbo-instruct";
+    doc["prompt"] = prompt;
+    doc["max_tokens"] = 50;
+    doc["temperature"] = 0;
+
+    String payload;
+    serializeJson(doc, payload);
+    Serial.println("Request payload: " + payload);
+
+    // Send HTTPS POST request
+    int httpCode = https.POST(payload);
+
+    if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+      String response = https.getString();
+      Serial.println("Response payload: " + response);
+
+      DynamicJsonDocument responseDoc(1024);
+      deserializeJson(responseDoc, response);
+
+      String answer = responseDoc["choices"][0]["text"].as<String>().substring(2);
+      Serial.print("Answer: ");
+      Serial.println(answer);
+
+      audio.connecttospeech(answer.c_str(), "en");
+    } else {
+      Serial.printf("[HTTPS] POST failed, error code: %d\n", httpCode);
+      Serial.println(https.getString());
+    }
+
+    https.end();
+  } else {
+    Serial.println("[HTTPS] Unable to connect");
+  }
+}
